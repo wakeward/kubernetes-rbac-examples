@@ -1,0 +1,74 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: private
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: user
+  namespace: private
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: secret-user-role
+  namespace: private
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  verbs:
+  - get
+  resourceNames:
+  - user-secret
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: secret-user-role-binding
+  namespace: private
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: secret-user-role
+subjects:
+- kind: ServiceAccount
+  name: user
+  namespace: private
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: private-console
+  labels:
+    name: private-console
+  namespace: private
+spec:
+  serviceAccountName: user
+  containers:
+  - name: console
+    image: docker.io/wakeward/ctf:latest
+    command: ["sleep", "2d"]
+    imagePullPolicy: IfNotPresent
+    securityContext:
+      allowPrivilegeEscalation: false
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: user-secret
+  namespace: private
+type: Opaque
+data:
+  password: dGhpc19pc19hX3NlY3JldF95b3VfY2FuX2FjY2Vzcw==
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: admin-secret
+  namespace: private
+type: Opaque
+data:
+  password: dGhpc19pc19hX3NlY3JldF9vbmx5X2FkbWluX2Nhbl9fYWNjZXNz
